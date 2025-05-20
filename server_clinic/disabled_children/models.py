@@ -10,8 +10,10 @@ class DisabledChild(models.Model):
     patient = models.OneToOneField(
         Patient,
         on_delete=models.CASCADE,
-        related_name="disabled_child",
-        verbose_name="Ребенок-инвалид",
+        # related_name="disabled_child",
+        # verbose_name="Ребенок-инвалид",
+        primary_key=True,
+        unique=True,
     )
 
     # Код МКБ
@@ -50,13 +52,17 @@ class DisabledChild(models.Model):
     def clean(self):
         # Валидация: для определенных статусов требуется дата установки
         if (
-            self.status
-            in ["new_current_mo", "new_other_mo", "existing_other_mo", "renewed"]
-            and not self.disability_date
+            DisabledChild.objects.exclude(pk=self.pk)
+            .filter(patient=self.patient)
+            .exists()
         ):
             raise ValidationError(
                 "Требуется указать дату установки инвалидности для выбранного статуса"
             )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Добавляем проверку валидации при сохранении
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Ребенок инвалид"

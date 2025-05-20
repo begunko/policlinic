@@ -181,3 +181,5 @@ cython_debug/
 
 
 const.py
+
+migrations
