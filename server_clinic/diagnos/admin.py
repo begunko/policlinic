@@ -11,7 +11,7 @@ class DiagnosisAdmin(admin.ModelAdmin):
     # Отображение полей в списке
     list_display = (
         "patient",
-        "icd_code",
+        "mkb_code",
         "disp_status",
         "disp_start_date",
         "disp_end_date",
@@ -36,7 +36,7 @@ class DiagnosisAdmin(admin.ModelAdmin):
 
     # Группировка полей в форме
     fieldsets = (
-        ("Пациент и код", {"fields": ("patient", "icd_code")}),
+        ("Пациент и код", {"fields": ("patient", "mkb_code")}),
         ("Статус диспансерного учёта", {"fields": ("disp_status", "primary_reason")}),
         ("Даты наблюдения", {"fields": ("disp_start_date", "disp_end_date")}),
         ("Причина снятия", {"fields": ("remove_reason",)}),
@@ -54,7 +54,7 @@ class DiagnosisAdmin(admin.ModelAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "patient",
-                    "icd_code",
+                    "mkb_code",
                     "disp_status",
                     "disp_start_date",
                     "primary_reason",

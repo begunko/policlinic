@@ -17,7 +17,7 @@ class DiagnosisInline(admin.TabularInline):
     model = Diagnosis
     extra = 0
     fields = (
-        "icd_code_link",
+        "mkb_code_link",
         "disp_status",
         "disp_start_date",
         "disp_end_date",
@@ -29,12 +29,12 @@ class DiagnosisInline(admin.TabularInline):
     def has_delete_permission(self, request, obj=None):
         return False  # Отключаем кнопку удаления
 
-    def icd_code_link(self, obj):  # Создает ссылку на страницу редактирования диагноза
+    def mkb_code_link(self, obj):  # Создает ссылку на страницу редактирования диагноза
         url = reverse("admin:diagnos_diagnosis_change", args=[obj.id])
-        return format_html('<a href="{}">{}</a>', url, obj.icd_code)
+        return format_html('<a href="{}">{}</a>', url, obj.mkb_code)
 
-    icd_code_link.short_description = "Код МКБ-10"
-    icd_code_link.allow_tags = True
+    mkb_code_link.short_description = "Код МКБ-10"
+    mkb_code_link.allow_tags = True
 
 
 # Административная модель для пациентов

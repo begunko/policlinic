@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from .constants import STATUS_CHOICES, REMOVAL_REASONS, PRIMARY_STATUS
 from server_clinic.validator import validate_icd10_format
 
+
 class DisabledChild(models.Model):
     # Связь один к одному с пациентом
     patient = models.OneToOneField(
@@ -62,7 +63,7 @@ class DisabledChild(models.Model):
                 )
 
     def save(self, *args, **kwargs):
-        self.full_clean()  # Добавляем проверку валидации при сохранении
+        self.clean()  # Добавляем проверку валидации при сохранении
         super().save(*args, **kwargs)
 
     class Meta:

@@ -21,7 +21,7 @@ class Diagnosis(models.Model):
     )
 
     # Основные поля
-    icd_code = models.CharField(
+    mkb_code = models.CharField(
         max_length=5,
         verbose_name="Код МКБ-10",
         help_text="Международный код заболевания",
@@ -102,12 +102,12 @@ class Diagnosis(models.Model):
             )
 
     def __str__(self):
-        return f"{self.patient} - {self.icd_code}"
+        return f"{self.patient} - {self.mkb_code}"
 
     class Meta:
         verbose_name = "Диагноз"
         verbose_name_plural = "Диагнозы"
         ordering = ["-disp_start_date"]
         unique_together = (
-            ("patient", "icd_code"),
+            ("patient", "mkb_code"),
         )  # Уникальность по полису и коду МКБ-10

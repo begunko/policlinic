@@ -124,12 +124,6 @@ class DisabledChildAdmin(admin.ModelAdmin):
         ):
             raise ValidationError("Для этого пациента уже существует запись")
 
-        # Проверяем обязательные поля
-        if not obj.status:
-            raise ValidationError({"status": "Статус инвалидности обязателен"})
-        if not obj.disability_date:
-            raise ValidationError({"disability_date": "Дата установки обязательна"})
-
         super().save_model(request, obj, form, change)
 
     def get_search_results(self, request, queryset, search_term):

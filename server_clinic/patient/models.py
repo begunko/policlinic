@@ -43,7 +43,9 @@ class Patient(models.Model):
         ordering = ["-created_at"]  # Сортировка по дате создания (от новых к старым)
         indexes = [
             models.Index(fields=["full_name"]),  # Индекс для быстрого поиска по ФИО
-            models.Index(fields=["insurance_number"]),  # Индекс для быстрого поиска по полису
+            models.Index(
+                fields=["insurance_number"]
+            ),  # Индекс для быстрого поиска по полису
         ]
 
     # Метод для строкового представления объекта
