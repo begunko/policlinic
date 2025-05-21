@@ -3,7 +3,7 @@ from django.db import models
 from patient.models import Patient
 from django.core.exceptions import ValidationError
 from .constants import STATUS_CHOICES, REMOVAL_REASONS, PRIMARY_STATUS
-
+from server_clinic.validator import validate_icd10_format
 
 class DisabledChild(models.Model):
     # Связь один к одному с пациентом
@@ -16,7 +16,12 @@ class DisabledChild(models.Model):
     )
 
     # Код МКБ
-    mkb_code = models.CharField("Код МКБ", max_length=10)
+    mkb_code = models.CharField(
+        max_length=5,
+        verbose_name="Код МКБ-10",
+        help_text="Международный код заболевания",
+        validators=[validate_icd10_format],
+    )
 
     # Статус инвалидности
     status = models.CharField(
