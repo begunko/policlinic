@@ -1,5 +1,10 @@
+# server_clinic/diagnos/admin.py
 from django.contrib import admin
 from .models import Diagnosis
+from django.utils import timezone
+from django.db.models import DateField
+from django.contrib.admin.widgets import AdminDateWidget
+from django.contrib.admin.filters import DateFieldListFilter
 
 
 class DiagnosisAdmin(admin.ModelAdmin):
@@ -14,15 +19,20 @@ class DiagnosisAdmin(admin.ModelAdmin):
     )
 
     # Фильтрация по полям
-    list_filter = ("disp_status", "disp_start_date", "disp_end_date", "remove_reason")
+    list_filter = (
+        "disp_status",
+        ("disp_start_date", DateFieldListFilter),
+        ("disp_end_date", DateFieldListFilter),
+        "remove_reason",
+    )
 
     # Поиск по полю
     search_fields = ["patient__insurance_number"]
 
-    autocomplete_fields = ["patient"]  # Автодополнение при вводе
+    autocomplete_fields = ["patient"]
 
-        # Оптимизация запросов к БД
-    list_select_related = ['patient']
+    # Оптимизация запросов к БД
+    list_select_related = ["patient"]
 
     # Группировка полей в форме
     fieldsets = (
@@ -42,7 +52,13 @@ class DiagnosisAdmin(admin.ModelAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("patient", "icd_code", "disp_status", "disp_start_date"),
+                "fields": (
+                    "patient",
+                    "icd_code",
+                    "disp_status",
+                    "disp_start_date",
+                    "primary_reason",
+                ),
             },
         ),
     )
@@ -56,7 +72,8 @@ class DiagnosisAdmin(admin.ModelAdmin):
     mark_as_removed.short_description = "Отметить как снятых с учёта (выздоровели)"
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('patient')
+        return super().get_queryset(request).select_related("patient")
+
 
 # Регистрация модели в админке
 admin.site.register(Diagnosis, DiagnosisAdmin)

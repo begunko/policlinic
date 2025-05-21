@@ -1,3 +1,4 @@
+# server_clinic/death/admin.py
 from django.contrib import admin
 from .models import Death
 from django import forms

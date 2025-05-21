@@ -1,8 +1,8 @@
-# disabled_children/models.py
+# server_clinic/disabled_children/models.py
 from django.db import models
 from patient.models import Patient
 from django.core.exceptions import ValidationError
-from .constants import STATUS_CHOICES, REMOVAL_REASONS
+from .constants import STATUS_CHOICES, REMOVAL_REASONS, PRIMARY_STATUS
 
 
 class DisabledChild(models.Model):
@@ -10,10 +10,9 @@ class DisabledChild(models.Model):
     patient = models.OneToOneField(
         Patient,
         on_delete=models.CASCADE,
-        # related_name="disabled_child",
-        # verbose_name="Ребенок-инвалид",
+        related_name="disabled_child",
+        verbose_name="Ребенок-инвалид",
         primary_key=True,
-        unique=True,
     )
 
     # Код МКБ
@@ -51,19 +50,16 @@ class DisabledChild(models.Model):
 
     def clean(self):
         # Валидация: для определенных статусов требуется дата установки
-        if (
-            DisabledChild.objects.exclude(pk=self.pk)
-            .filter(patient=self.patient)
-            .exists()
-        ):
-            raise ValidationError(
-                "Требуется указать дату установки инвалидности для выбранного статуса"
-            )
+        if self.status in PRIMARY_STATUS:
+            if not self.disability_date:
+                raise ValidationError(
+                    "Требуется указать дату установки инвалидности для выбранного статуса"
+                )
 
     def save(self, *args, **kwargs):
         self.full_clean()  # Добавляем проверку валидации при сохранении
         super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name = "Ребенок инвалид"
-        verbose_name_plural = "Дети инвалиды"
+        verbose_name = "Ребенок-инвалид"
+        verbose_name_plural = "Дети-инвалиды"

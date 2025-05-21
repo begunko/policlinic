@@ -1,5 +1,4 @@
-# de
-import re
+# server_clinic/death/models.py
 from django.db import models
 from patient.models import Patient
 from datetime import date
@@ -7,17 +6,7 @@ from django.core.exceptions import ValidationError
 from .constants import (
     DEATH_PLACE_CHOICES,  # Константы для выбора места смерти
 )
-
-
-def validate_icd10_format(value):
-    """
-    Валидатор для кодов МКБ-10 согласно официальному формату
-    Формат: буква + две цифры + опционально точка и до 4 символов
-    Примеры: C34.9, A00, Z99.ABCD
-    """
-    pattern = r"^[A-TV-Z][0-9][0-9A-Z](?:\.[0-9A-Z]{1,4})?$"
-    if not re.match(pattern, value, re.IGNORECASE):
-        raise ValidationError("Неверный формат МКБ-10. Пример: A00.0")
+from server_clinic.validator import validate_icd10_format
 
 
 class Death(models.Model):

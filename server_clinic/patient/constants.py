@@ -1,3 +1,4 @@
+# server_clinic/patient/constants.py
 # Константы для выбора пола
 GENDER_CHOICES = [("М", "Мужской"), ("Ж", "Женский")]
 

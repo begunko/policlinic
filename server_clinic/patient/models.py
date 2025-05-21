@@ -1,27 +1,10 @@
+# server_clinic/patient/model.py
 from django.db import models
-from django.core.exceptions import ValidationError
-from datetime import datetime, date
+from datetime import date
 from django.core.validators import RegexValidator
 from dateutil.relativedelta import relativedelta
 from .constants import GENDER_CHOICES, FILIAL
-
-
-# Валидатор для проверки даты рождения
-def validate_birth_date(value):
-    # Проверка на слишком позднюю дату
-    if value.year > date.today().year:
-        raise ValidationError(
-            "Дата рождения не может быть в будущем или слишком поздней"
-        )
-    # Проверка на слишком раннюю дату
-    if value.year < datetime.today().year - 150:
-        raise ValidationError("Дата рождения не может быть раньше 1873 года")
-
-
-# Валидатор для проверки длины номера полиса
-def validate_insurance_number(value):
-    if len(value) != 16 or not value.isdigit():
-        raise ValidationError("Номер полиса ОМС должен содержать ровно 16 символов")
+from server_clinic.validator import validate_birth_date, validate_insurance_number
 
 
 # Модель пациента, наследуется от AbstractUser
@@ -45,7 +28,7 @@ class Patient(models.Model):
         max_length=16,
         unique=True,
         validators=[validate_insurance_number],
-        db_index=True,  # Обязательно добавляем индекс
+        db_index=True,
         verbose_name="Номер полиса ОМС",
         help_text="16 цифр без пробелов и разделителей",
     )
@@ -57,10 +40,10 @@ class Patient(models.Model):
     class Meta:
         verbose_name = "Пациент"
         verbose_name_plural = "Пациенты"
-        ordering = ["-created_at"]  # Сортировка по умолчанию
+        ordering = ["-created_at"]  # Сортировка по дате создания (от новых к старым)
         indexes = [
-            models.Index(fields=["full_name"]),
-            models.Index(fields=["insurance_number"]),
+            models.Index(fields=["full_name"]),  # Индекс для быстрого поиска по ФИО
+            models.Index(fields=["insurance_number"]),  # Индекс для быстрого поиска по полису
         ]
 
     # Метод для строкового представления объекта

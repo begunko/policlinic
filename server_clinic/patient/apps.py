@@ -1,3 +1,4 @@
+# server_clinic/patient/apps.py
 from django.apps import AppConfig
 
 

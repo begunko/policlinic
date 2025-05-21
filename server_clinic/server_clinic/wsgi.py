@@ -1,3 +1,4 @@
+# server_clinic/server_clinic/wsgi.py
 """
 WSGI config for server_clinic project.
 

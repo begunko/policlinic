@@ -1,183 +1,165 @@
-# disabled_children/admin.py
+# server_clinic/disabled_children/admin.py
 from django.contrib import admin
+from django.db.models import Q
+from django.urls import reverse
+from django.utils.html import format_html
+from django import forms
+from django.core.exceptions import ValidationError
 from .models import DisabledChild
 from patient.models import Patient
-from django.forms import TextInput, Textarea
-from django.db.models import Q
-from django.core.exceptions import ValidationError
+
+
+# Форма для админ-интерфейса
+class DisabledChildAdminForm(forms.ModelForm):
+    class Meta:
+        model = DisabledChild
+        fields = "__all__"
+        widgets = {
+            "search_term": forms.TextInput(
+                attrs={
+                    "placeholder": "Введите номер полиса ОМС...",
+                    "class": "vTextField",
+                    "autofocus": "autofocus",
+                }
+            ),
+            "disability_date": forms.DateInput(
+                format=("%Y-%m-%d"), attrs={"type": "date", "class": "vDateField"}
+            ),
+            "removal_date": forms.DateInput(
+                format=("%Y-%m-%d"), attrs={"type": "date", "class": "vDateField"}
+            ),
+            "comorbidities": forms.Textarea(attrs={"rows": 3}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+        
+        # Добавляем явную проверку на обязательность полей
+        required_fields = ["status", "disability_date"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Делаем автоподтянутые поля readonly
+        for field in "full_name", "gender", "birth_date", "age", "filial":
+            self.fields[field].widget.attrs["readonly"] = True
+            self.fields[field].widget.attrs["class"] = "readonly"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Проверка уникальности пациента
+        if (
+            DisabledChild.objects.filter(patient=cleaned_data.get("patient"))
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
+            raise ValidationError(
+                "Для этого пациента уже существует запись о инвалидности"
+            )
+
+        # Проверка соответствия полиса и пациента
+        if (
+            self.instance.pk
+            and cleaned_data.get("search_term")
+            != self.instance.patient.insurance_number
+        ):
+            raise ValidationError(
+                {"search_term": "Невозможно изменить полис для существующей записи"}
+            )
+
+        # Добавляем проверку на заполненность обязательных полей
+        for field in ["status", "disability_date"]:
+            if not cleaned_data.get(field):
+                self.add_error(field, "Это поле обязательно для заполнения")
+
+        return cleaned_data
 
 
 @admin.register(DisabledChild)
 class DisabledChildAdmin(admin.ModelAdmin):
-    # Отображение в списке
-    list_display = ("patient", "mkb_code", "status", "disability_date", "palliative")
-
-    # Фильтры
-    list_filter = ("status", "palliative")
-
-    # Поиск только по полису
-    search_fields = ("patient__insurance_number",)
-
-    # Автодополнение пациента
-    autocomplete_fields = ("patient",)
-
-    # Поля только для чтения
-    readonly_fields = (
-        "patient_info",
-        "patient_full_name",
-        "patient_birth_date",
-        "patient_gender",
-        "patient_filial",
+    # form = DisabledChildAdminForm
+    list_display = (
+        "patient_link",
+        "status",
+        "disability_date",
+        "palliative",
+        "removal_reason",
+        "removal_date",
     )
+    list_filter = ("status", "palliative", "removal_reason")
+    search_fields = ("patient__insurance_number",)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Добавляем проверку на существование fields
+        if self.fields:
+            for field in ("patient", "mkb_code", "status", "disability_date", "palliative"):
+                if field in self.fields:
+                    self.fields[field].widget.attrs["readonly"] = True
+                    self.fields[field].widget.attrs["class"] = "readonly"
 
-    # Структура полей
+    def search_term(self, obj):
+        return obj.patient.insurance_number if obj.patient else ""
+
+    search_term.short_description = "Номер полиса ОМС"
+
     fieldsets = (
         (
             "Основная информация",
             {
                 "fields": (
                     "patient",
-                    "patient_info",
-                    "patient_full_name",
-                    "patient_birth_date",
-                    "patient_gender",
-                    "patient_filial",
                     "mkb_code",
-                ),
-                "description": "Поиск пациента по номеру полиса ОМС",
+                    "status",
+                    "disability_date",
+                    "palliative",
+                )
             },
         ),
-        (
-            "Статус инвалидности",
-            {
-                "fields": ("status", "disability_date"),
-                "description": "Дата обязательна для статусов кроме 'Состоит'",
-            },
-        ),
-        ("Паллиативная помощь", {"fields": ("palliative",)}),
         (
             "Снятие с учета",
-            {"fields": ("removal_reason", "removal_date"), "classes": ("collapse",)},
+            {"fields": ("removal_reason", "removal_date")},
         ),
         (
-            "Дополнительно",
-            {"fields": ("comorbidities", "notes"), "classes": ("collapse",)},
+            "Дополнительная информация",
+            {"fields": ("comorbidities", "notes")},
         ),
     )
 
-    # Форматы для текстовых полей
-    formfield_overrides = {
-        Textarea: {"widget": Textarea(attrs={"rows": 3, "cols": 40})},
-        TextInput: {"widget": TextInput(attrs={"size": 40})},
-    }
+    # Ссылка на пациента
+    def patient_link(self, obj):
+        url = reverse("admin:patient_patient_change", args=[obj.patient_id])
+        return format_html('<a href="{}">{}</a>', url, obj.patient)
 
-    # Вычисляемые поля для информации о пациенте
-    def patient_info(self, obj):
-        return f"№ полиса: {obj.patient.insurance_number}"
+    patient_link.short_description = "Пациент"
+    patient_link.allow_tags = True
 
-    patient_info.short_description = "Номер полиса ОМС"
-
-    def patient_full_name(self, obj):
-        return obj.patient.full_name
-
-    patient_full_name.short_description = "ФИО пациента"
-
-    def patient_birth_date(self, obj):
-        return obj.patient.birth_date
-
-    patient_birth_date.short_description = "Дата рождения"
-
-    def patient_gender(self, obj):
-        return obj.patient.get_gender_display()
-
-    patient_gender.short_description = "Пол"
-
-    def patient_filial(self, obj):
-        return obj.patient.filial 
-
-    patient_filial.short_description = "Прикрепление"
-
-    # Ограничение прав на изменение пациента после создания
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # При редактировании существующей записи
-            return self.readonly_fields
-        return ()
-
-    # Ограничение прав на изменение некоторых полей
-    def has_change_permission(self, request, obj=None):
-        if obj:  # При редактировании существующей записи
-            return True
-        return False
-
-    # Метод для поиска только по полису
-    def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
-        
-        # Проверка на пустые значения
-        if search_term and search_term.strip():
-            queryset = queryset.filter(
-                Q(patient__insurance_number__icontains=search_term)
-            )
-        else:
-            # Если поиск пустой, возвращаем пустой результат
-            queryset = DisabledChild.objects.none()
-        
-        return queryset, use_distinct
-
-    # Дополнительно добавим валидацию для формы создания
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'patient':
-            # Добавляем проверку на то, что пациент уже не зарегистрирован как инвалид
-            kwargs['queryset'] = Patient.objects.exclude(
-                disabledchild__isnull=False
-            )
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    # Добавим проверку на уникальность пациента
-    def clean(self):
-        cleaned_data = super().clean()
-        patient = cleaned_data.get('patient')
-        
-        if patient and DisabledChild.objects.filter(patient=patient).exists():
-            raise ValidationError("Пациент уже зарегистрирован как ребенок-инвалид")
-        
-        return cleaned_data
-
-    # Ограничение прав на изменение некоторых полей
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-        
-        # Делаем поле пациента доступным только для чтения при редактировании
-        if obj:
-            form.base_fields['patient'].disabled = True
-        
-        return form
-
-    # Ограничение прав на изменение пациента после создания
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # При редактировании существующей записи
-            return self.readonly_fields
-        return ()
-
-    # Ограничение прав на изменение некоторых полей
-    def has_change_permission(self, request, obj=None):
-        if obj:  # При редактировании существующей записи
-            return True
-        return False
-
-    # Обработка сохранения объекта
+    # Валидация при сохранении
     def save_model(self, request, obj, form, change):
-        if not change:  # При создании новой записи
-            # Проверяем, что пациент еще не зарегистрирован как инвалид
-            if DisabledChild.objects.filter(patient=obj.patient).exists():
-                raise ValidationError("Пациент уже зарегистрирован как ребенок-инвалид")
-        
+        obj.full_clean()  # Добавляем проверку валидации
         super().save_model(request, obj, form, change)
 
-    # Обработка удаления объекта
-    def delete_model(self, request, obj):
-        # Добавляем дополнительную проверку перед удалением
-        if obj.palliative:
-            raise ValidationError("Невозможно удалить запись, так как пациент получает паллиативную помощь")
-        
-        super().delete_model(request, obj)
+    # Упрощенный поиск только по полису
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(
+            request, queryset, search_term
+        )
+        # Убран сложный поиск по комбинации полиса и МКБ
+        return queryset, use_distinct
+
+    # Сортировка по умолчанию
+    ordering = ("-disability_date",)
+
+    # Добавляем проверку на уникальность пациента
+    def clean(self):
+        if self.instance.pk:
+            if (
+                DisabledChild.objects.filter(patient=self.instance.patient)
+                .exclude(pk=self.instance.pk)
+                .exists()
+            ):
+                raise ValidationError("Для этого пациента уже существует запись")
+
+    # Добавляем проверку на обязательные поля
+    def clean(self):
+        if not self.cleaned_data.get("status"):
+            raise ValidationError({"status": "Статус инвалидности обязателен"})
+        if not self.cleaned_data.get("disability_date"):
+            raise ValidationError({"disability_date": "Дата установки обязательна"})

@@ -1,3 +1,4 @@
+# server_clinic/server_clinic/urls.py
 """
 URL configuration for server_clinic project.
 

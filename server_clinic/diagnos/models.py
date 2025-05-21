@@ -1,4 +1,4 @@
-import re
+# server_clinic/diagnos/models.py
 from django.db import models
 from patient.models import Patient
 from django.core.exceptions import ValidationError
@@ -7,16 +7,7 @@ from .constants import (
     PRIMARY_REASON_CHOICES,
     REMOVE_REASON_CHOICES,
 )
-
-icd10_regex = re.compile(r"^[A-Z][0-9]{2}(\.[0-9])?$")
-
-
-def validate_icd10_format(value):
-    if not icd10_regex.match(value):
-        raise ValidationError(
-            "Неверный формат кода МКБ-10. "
-            "Правильный формат: одна латинская буква, две цифры, опционально точка и еще одна цифра"
-        )
+from server_clinic.validator import validate_icd10_format
 
 
 class Diagnosis(models.Model):
@@ -28,7 +19,6 @@ class Diagnosis(models.Model):
         verbose_name="Пациент",
         help_text="Поиск по номеру полиса ОМС пациента",  # Добавляем пояснение
     )
-
 
     # Основные поля
     icd_code = models.CharField(
@@ -110,7 +100,6 @@ class Diagnosis(models.Model):
             raise ValidationError(
                 {"disp_end_date": "Дата снятия не может быть раньше даты начала"}
             )
-
 
     def __str__(self):
         return f"{self.patient} - {self.icd_code}"

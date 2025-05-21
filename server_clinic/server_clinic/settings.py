@@ -1,3 +1,4 @@
+# server_clinic/server_clinic/settings.py
 """
 Django settings for server_clinic project.
 

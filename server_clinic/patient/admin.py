@@ -1,3 +1,4 @@
+# server_clinic/patient/admin.py
 from django.contrib import admin
 from django.db.models import Q
 from django.urls import reverse
@@ -11,6 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# Inline-модель для диагнозов
 class DiagnosisInline(admin.TabularInline):
     model = Diagnosis
     extra = 0
@@ -27,7 +29,7 @@ class DiagnosisInline(admin.TabularInline):
     def has_delete_permission(self, request, obj=None):
         return False  # Отключаем кнопку удаления
 
-    def icd_code_link(self, obj):
+    def icd_code_link(self, obj):  # Создает ссылку на страницу редактирования диагноза
         url = reverse("admin:diagnos_diagnosis_change", args=[obj.id])
         return format_html('<a href="{}">{}</a>', url, obj.icd_code)
 
@@ -35,6 +37,7 @@ class DiagnosisInline(admin.TabularInline):
     icd_code_link.allow_tags = True
 
 
+# Административная модель для пациентов
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
     inlines = [DiagnosisInline]
@@ -43,11 +46,11 @@ class PatientAdmin(admin.ModelAdmin):
         "full_name",
         "age",
         "gender",
-        "filial_display",  # Показываем читаемое значение филиала
+        "filial_display",  # Отображение читаемого названия филиала
         "insurance_number",
     )
 
-    # Фильтры справа
+    # Фильтры в админке
     list_filter = (
         "gender",
         "filial",  # Фильтрация по филиалам
@@ -100,7 +103,7 @@ class PatientAdmin(admin.ModelAdmin):
         except ValueError:
             pass
 
-        # Поиск по возрасту (преобразуем в год рождения)
+        # Поиск по возрасту
         if search_term.isdigit():
             age = int(search_term)
             target_year = date.today().year - age
@@ -114,4 +117,4 @@ class PatientAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .only("insurance_number", "full_name", "birth_date")
-        )
+        )  # Загружаем только необходимые поля для оптимизации
