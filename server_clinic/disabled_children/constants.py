@@ -22,3 +22,13 @@ PRIMARY_STATUS = [
     "new_other_mo",
     "renewed",
 ]
+
+REMOVAL_STATUS = [
+    "moved",
+    "removed",
+    "died",
+    "adult",
+    "refusal",
+    "diagnosis_change",
+    "error",
+]

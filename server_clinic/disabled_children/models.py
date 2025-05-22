@@ -2,8 +2,9 @@
 from django.db import models
 from patient.models import Patient
 from django.core.exceptions import ValidationError
-from .constants import STATUS_CHOICES, REMOVAL_REASONS, PRIMARY_STATUS
+from .constants import STATUS_CHOICES, REMOVAL_REASONS
 from server_clinic.validator import validate_icd10_format
+from .validator import validate_status_date_consistency, validate_date_removal
 
 
 class DisabledChild(models.Model):
@@ -55,14 +56,10 @@ class DisabledChild(models.Model):
         return f"{self.patient} - {self.get_status_display()}"
 
     def clean(self):
-        # Валидация: для определенных статусов требуется дата установки
-        if self.status not in PRIMARY_STATUS and not self.disability_date:
-                raise ValidationError(
-                    "Требуется указать дату установки инвалидности для выбранного статуса"
-                )
-        # Дополнительная валидация дат
-        if self.removal_date and not self.disability_date:
-            raise ValidationError("Дата снятия не может быть раньше даты установки")
+        # Проверка связи между статусом и датой
+        validate_status_date_consistency(self)
+        # Дополнительная валидация даты снятия
+        validate_date_removal(self)
 
     class Meta:
         verbose_name = "Ребенок-инвалид"
