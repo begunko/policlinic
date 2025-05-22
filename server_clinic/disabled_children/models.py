@@ -56,15 +56,13 @@ class DisabledChild(models.Model):
 
     def clean(self):
         # Валидация: для определенных статусов требуется дата установки
-        if self.status in PRIMARY_STATUS:
-            if not self.disability_date:
+        if self.status not in PRIMARY_STATUS and not self.disability_date:
                 raise ValidationError(
                     "Требуется указать дату установки инвалидности для выбранного статуса"
                 )
-
-    def save(self, *args, **kwargs):
-        self.clean()  # Добавляем проверку валидации при сохранении
-        super().save(*args, **kwargs)
+        # Дополнительная валидация дат
+        if self.removal_date and not self.disability_date:
+            raise ValidationError("Дата снятия не может быть раньше даты установки")
 
     class Meta:
         verbose_name = "Ребенок-инвалид"
