@@ -10,11 +10,19 @@ from server_clinic.validators import validate_birth_date, validate_insurance_num
 # Модель пациента, наследуется от AbstractUser
 class Patient(models.Model):
     # Базовые данные пациента
-    full_name = models.CharField("ФИО", max_length=100)
-    birth_date = models.DateField(
-        verbose_name="Дата рождения", validators=[validate_birth_date]
+    full_name = models.CharField(
+        "ФИО",
+        max_length=100,
     )
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name="Пол")
+    birth_date = models.DateField(
+        verbose_name="Дата рождения",
+        validators=[validate_birth_date],
+    )
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        verbose_name="Пол",
+    )
     phone_number = models.CharField(
         max_length=15,
         blank=True,
@@ -38,9 +46,13 @@ class Patient(models.Model):
         verbose_name="Номер полиса ОМС",
         help_text="16 цифр без пробелов и разделителей",
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата создания",
+    )
     updated_at = models.DateTimeField(
-        auto_now=True, verbose_name="Последнее обновление"
+        auto_now=True,
+        verbose_name="Последнее обновление",
     )
 
     class Meta:
@@ -48,10 +60,8 @@ class Patient(models.Model):
         verbose_name_plural = "Пациенты"
         ordering = ["-created_at"]  # Сортировка по дате создания (от новых к старым)
         indexes = [
-            models.Index(fields=["full_name"]),  # Индекс для быстрого поиска по ФИО
-            models.Index(
-                fields=["insurance_number"]
-            ),  # Индекс для быстрого поиска по полису
+            models.Index(fields=["full_name"]),
+            models.Index(fields=["insurance_number"]),
         ]
 
     # Метод для строкового представления объекта

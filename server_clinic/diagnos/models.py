@@ -1,13 +1,17 @@
 # server_clinic/diagnos/models.py
 from django.db import models
 from patient.models import Patient
-from django.core.exceptions import ValidationError
 from .constants import (
     DISP_STATUS_CHOICES,
     PRIMARY_REASON_CHOICES,
     REMOVE_REASON_CHOICES,
 )
-from server_clinic.validators import validate_icd10_format
+from server_clinic.validators import (
+    validate_icd10_format,
+    validate_primary_reason,
+    validate_remove_reason,
+    validate_disp_end_date,
+)
 
 
 class Diagnosis(models.Model):
@@ -43,11 +47,11 @@ class Diagnosis(models.Model):
         verbose_name="Причина первичного выявления",
     )
 
-    # Даты
     disp_start_date = models.DateField(
         verbose_name="Дата взятия на ДН",
         help_text="Дата начала диспансерного наблюдения",
     )
+    
     disp_end_date = models.DateField(
         blank=True, null=True, verbose_name="Дата снятия с ДН"
     )
@@ -61,45 +65,19 @@ class Diagnosis(models.Model):
     )
 
     # Дополнительные поля
-    comment = models.TextField(blank=True, verbose_name="Комментарий")
+    comment = models.TextField(
+        blank=True,
+        verbose_name="Комментарий",
+    )
 
     # Валидация модели
     def clean(self):
         # Валидация primary_reason
-        if self.disp_status == "с_впервые":
-            if not self.primary_reason:
-                raise ValidationError(
-                    {
-                        "primary_reason": 'Для статуса "с впервые" необходимо указать причину первичного выявления'
-                    }
-                )
-        elif self.primary_reason:
-            raise ValidationError(
-                {
-                    "primary_reason": 'Причина первичного выявления актуальна только для статуса "с впервые"'
-                }
-            )
-
+        validate_primary_reason(self)
         # Валидация remove_reason
-        if self.disp_end_date:
-            if not self.remove_reason:
-                raise ValidationError(
-                    {
-                        "remove_reason": "При указании даты снятия необходимо указать причину снятия"
-                    }
-                )
-        elif self.remove_reason:
-            raise ValidationError(
-                {
-                    "remove_reason": "Причина снятия актуальна только при наличии даты снятия"
-                }
-            )
-
+        validate_remove_reason(self)
         # Проверка дат
-        if self.disp_end_date and self.disp_end_date < self.disp_start_date:
-            raise ValidationError(
-                {"disp_end_date": "Дата снятия не может быть раньше даты начала"}
-            )
+        validate_disp_end_date(self)
 
     def __str__(self):
         return f"{self.patient} - {self.mkb_code}"

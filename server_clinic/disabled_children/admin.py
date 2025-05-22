@@ -20,10 +20,18 @@ class DisabledChildAdminForm(forms.ModelForm):
                 }
             ),
             "disability_date": forms.DateInput(
-                format=("%Y-%m-%d"), attrs={"type": "date", "class": "vDateField"}
+                format=("%Y-%m-%d"),
+                attrs={
+                    "type": "date",
+                    "class": "vDateField",
+                },
             ),
             "removal_date": forms.DateInput(
-                format=("%Y-%m-%d"), attrs={"type": "date", "class": "vDateField"}
+                format=("%Y-%m-%d"),
+                attrs={
+                    "type": "date",
+                    "class": "vDateField",
+                },
             ),
             "comorbidities": forms.Textarea(attrs={"rows": 3}),
             "notes": forms.Textarea(attrs={"rows": 3}),
@@ -34,7 +42,7 @@ class DisabledChildAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Делаем автоподтянутые поля readonly
+        # * Делаем автоподтянутые поля readonly
         for field in "full_name", "gender", "birth_date", "age", "filial":
             self.fields[field].widget.attrs["readonly"] = True
             self.fields[field].widget.attrs["class"] = "readonly"

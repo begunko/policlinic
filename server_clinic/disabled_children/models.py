@@ -2,8 +2,11 @@
 from django.db import models
 from patient.models import Patient
 from .constants import STATUS_CHOICES, REMOVAL_REASONS
-from server_clinic.validators import validate_icd10_format
-from .validators import validate_status_date_consistency, validate_date_removal
+from server_clinic.validators import (
+    validate_icd10_format,
+    validate_status_date_consistency,
+    validate_date_removal,
+)
 
 
 class DisabledChild(models.Model):
