@@ -7,7 +7,7 @@ from .constants import (
     PRIMARY_REASON_CHOICES,
     REMOVE_REASON_CHOICES,
 )
-from server_clinic.validator import validate_icd10_format
+from server_clinic.validators import validate_icd10_format
 
 
 class Diagnosis(models.Model):

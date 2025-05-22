@@ -1,40 +1,61 @@
 # server_clinic/death/models.py
 from django.db import models
 from patient.models import Patient
-from datetime import date
 from django.core.exceptions import ValidationError
-from .constants import (
-    DEATH_PLACE_CHOICES,  # Константы для выбора места смерти
-)
-from server_clinic.validator import validate_icd10_format
+from .constants import DEATH_PLACE_CHOICES
+from server_clinic.validators import validate_icd10_format, validate_death_date
+from patient.constants import GENDER_CHOICES, FILIAL
 
 
 class Death(models.Model):
-    # Связь с пациентом
     patient = models.OneToOneField(
-        Patient, on_delete=models.CASCADE, related_name="death", verbose_name="Пациент"
-    )
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="death",
+        verbose_name="Пациент",
+    )  # Связь с пациентом
 
-    # Поля для поиска пациента
     search_term = models.CharField(
         max_length=16,
         verbose_name="Поиск по полису ОМС",
         help_text="Введите номер полиса ОМС для поиска пациента",
-    )
+    )  # Поля для поиска пациента
 
-    # Автоподтягиваемые поля
     full_name = models.CharField(
-        max_length=100, verbose_name="ФИО пациента", editable=False
-    )
-    gender = models.CharField(max_length=1, verbose_name="Пол", editable=False)
-    birth_date = models.DateField(verbose_name="Дата рождения", editable=False)
-    age = models.PositiveSmallIntegerField(verbose_name="Возраст", editable=False)
-    filial = models.CharField(
-        max_length=20, verbose_name="Филиал прикрепления", editable=False
-    )
+        max_length=100,
+        verbose_name="ФИО пациента",
+        editable=False,
+    )  # * Автоподтягиваемые поля
 
-    # Основные поля
-    death_date = models.DateField(verbose_name="Дата смерти", blank=False, null=True)
+    gender = models.CharField(
+        max_length=1,
+        choices=GENDER_CHOICES,
+        verbose_name="Пол",
+        editable=False,
+    )  # * Автоподтягиваемые поля
+
+    birth_date = models.DateField(
+        verbose_name="Дата рождения",
+        editable=False,
+    )  # * Автоподтягиваемые поля
+
+    age = models.PositiveSmallIntegerField(
+        verbose_name="Возраст",
+        editable=False,
+    )  # * Автоподтягиваемые поля
+
+    filial = models.CharField(
+        max_length=20,
+        choices=FILIAL,
+        verbose_name="Филиал прикрепления",
+        editable=False,
+    )  # * Автоподтягиваемые поля
+
+    death_date = models.DateField(
+        verbose_name="Дата смерти",
+        blank=False,
+        null=True,
+    )  # Основные поля
 
     death_place = models.CharField(
         max_length=20,
@@ -42,7 +63,7 @@ class Death(models.Model):
         verbose_name="Место смерти",
         blank=False,
         null=False,
-    )
+    )  # Место смерти
 
     death_cause = models.CharField(
         max_length=5,
@@ -50,7 +71,7 @@ class Death(models.Model):
         verbose_name="Причина смерти (МКБ-10)",
         blank=False,
         null=False,
-    )
+    )  # Причина смерти по МКБ-10
 
     comment = models.TextField(blank=True, verbose_name="Комментарий")
 
@@ -69,14 +90,8 @@ class Death(models.Model):
                 raise ValidationError(
                     {"search_term": "Пациент с таким полисом не найден"}
                 )
-            except Patient.MultipleObjectsReturned:
-                raise ValidationError(
-                    {"search_term": "Найдено несколько пациентов с одинаковым полисом"}
-                )
 
-        # Проверка даты смерти
-        if self.death_date > date.today():
-            raise ValidationError({"death_date": "Дата смерти не может быть в будущем"})
+        validate_death_date(self)
 
     def __str__(self):
         return f"{self.full_name} - {self.death_date}"

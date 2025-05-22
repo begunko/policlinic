@@ -1,5 +1,5 @@
 # server_clinic/disabled_children/validator.py
-from .constants import PRIMARY_STATUS, REMOVAL_STATUS
+from disabled_children.constants import PRIMARY_STATUS, REMOVAL_STATUS
 from django.core.exceptions import ValidationError
 
 

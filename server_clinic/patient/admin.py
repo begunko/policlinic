@@ -117,4 +117,4 @@ class PatientAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .only("insurance_number", "full_name", "birth_date")
-        )  # Загружаем только необходимые поля для оптимизации
+        )

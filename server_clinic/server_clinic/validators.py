@@ -54,16 +54,27 @@ def validate_birth_date(value):
 def validate_insurance_number(value):
     """
     Валидатор для проверки номера полиса ОМС.
-    
+
     Параметры:
     value (str): Номер полиса ОМС для проверки
-    
+
     Проверка включает:
     1. Длина номера должна быть ровно 16 символов
     2. Все символы должны быть цифрами
     3. Не допускается наличие пробелов или других символов
-    
+
     При несоответствии условию выбрасывается исключение ValidationError
     """
     if len(value) != 16 or not value.isdigit():
         raise ValidationError("Номер полиса ОМС должен содержать ровно 16 цифр")
+
+
+def validate_death_date(instance):
+    # Проверка даты смерти
+    if instance.death_date > date.today():
+        raise ValidationError({"death_date": "Дата смерти не может быть в будущем"})
+    if instance.death_date < instance.birth_date:
+        raise ValidationError(
+            {"death_date": "Дата смерти не может быть раньше даты рождения"}
+        )
+

@@ -4,7 +4,7 @@ from datetime import date
 from django.core.validators import RegexValidator
 from dateutil.relativedelta import relativedelta
 from .constants import GENDER_CHOICES, FILIAL
-from server_clinic.validator import validate_birth_date, validate_insurance_number
+from server_clinic.validators import validate_birth_date, validate_insurance_number
 
 
 # Модель пациента, наследуется от AbstractUser
@@ -22,7 +22,13 @@ class Patient(models.Model):
         verbose_name="Номер телефона",
         validators=[RegexValidator(r"^\+7\d{10}$", message="Формат: +7XXXXXXXXXX")],
     )
-    filial = models.CharField("Филиал", max_length=20, choices=FILIAL, default="0")
+    filial = models.CharField(
+        "Филиал",
+        max_length=20,
+        choices=FILIAL,
+        blank=False,
+        null=False,
+    )
     # Дополнительные поля
     insurance_number = models.CharField(
         max_length=16,

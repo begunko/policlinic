@@ -1,12 +1,9 @@
 # server_clinic/disabled_children/admin.py
 from django.contrib import admin
 from django.db.models import Q
-from django.urls import reverse
-from django.utils.html import format_html
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import DisabledChild
-from patient.models import Patient
 
 
 # Форма для админ-интерфейса
@@ -63,11 +60,6 @@ class DisabledChildAdminForm(forms.ModelForm):
             raise ValidationError(
                 {"search_term": "Невозможно изменить полис для существующей записи"}
             )
-
-        # & Добавляем проверку на заполненность обязательных полей
-        # for field in ["status", "disability_date"]:
-        #     if not cleaned_data.get(field):
-        #         self.add_error(field, "Это поле обязательно для заполнения")
 
         return cleaned_data
 

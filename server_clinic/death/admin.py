@@ -36,7 +36,7 @@ class DeathAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Делаем автоподтянутые поля readonly
+        #* Делаем автоподтянутые поля readonly
         for field in "full_name", "gender", "birth_date", "age", "filial":
             self.fields[field].widget.attrs["readonly"] = True
             self.fields[field].widget.attrs["class"] = "readonly"

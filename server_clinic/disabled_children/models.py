@@ -1,56 +1,68 @@
 # server_clinic/disabled_children/models.py
 from django.db import models
 from patient.models import Patient
-from django.core.exceptions import ValidationError
 from .constants import STATUS_CHOICES, REMOVAL_REASONS
-from server_clinic.validator import validate_icd10_format
-from .validator import validate_status_date_consistency, validate_date_removal
+from server_clinic.validators import validate_icd10_format
+from .validators import validate_status_date_consistency, validate_date_removal
 
 
 class DisabledChild(models.Model):
-    # Связь один к одному с пациентом
     patient = models.OneToOneField(
         Patient,
         on_delete=models.CASCADE,
         related_name="disabled_child",
         verbose_name="Ребенок-инвалид",
         primary_key=True,
-    )
+    )  # Связь с пациентом
 
-    # Код МКБ
     mkb_code = models.CharField(
         max_length=5,
         verbose_name="Код МКБ-10",
         help_text="Международный код заболевания",
         validators=[validate_icd10_format],
-    )
+    )  # Код МКБ
 
-    # Статус инвалидности
     status = models.CharField(
-        "Статус", max_length=20, choices=STATUS_CHOICES, default="registered"
-    )
+        "Статус",
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="registered",
+    )  # Статус инвалидности
 
-    # Дата установки инвалидности
     disability_date = models.DateField(
-        "Дата установки инвалидности", null=True, blank=True
-    )
+        "Дата установки инвалидности",
+        null=True,
+        blank=True,
+    )  # Дата установки инвалидности
 
-    # Флаг паллиативного пациента
-    palliative = models.BooleanField("Паллиативный пациент", default=False)
+    palliative = models.BooleanField(
+        "Паллиативный пациент",
+        default=False,
+    )  # Флаг паллиативного пациента
 
-    # Причина снятия с учета
     removal_reason = models.CharField(
-        "Причина снятия", max_length=20, choices=REMOVAL_REASONS, null=True, blank=True
-    )
+        "Причина снятия",
+        max_length=20,
+        choices=REMOVAL_REASONS,
+        null=True,
+        blank=True,
+    )  # Причина снятия с учета
 
-    # Дата снятия с учета
-    removal_date = models.DateField("Дата снятия", null=True, blank=True)
+    removal_date = models.DateField(
+        "Дата снятия",
+        null=True,
+        blank=True,
+    )  # Дата снятия с учета
 
-    # Сопутствующие диагнозы
-    comorbidities = models.TextField("Сопутствующие диагнозы", blank=True)
+    comorbidities = models.TextField(
+        "Сопутствующие диагнозы",
+        blank=True,
+    )  # Сопутствующие диагнозы
 
-    # Примечания
-    notes = models.TextField("Примечания", blank=True)
+    notes = models.TextField(
+        "Примечания",
+        blank=True,
+    )  # Примечания
 
     def __str__(self):
         return f"{self.patient} - {self.get_status_display()}"
