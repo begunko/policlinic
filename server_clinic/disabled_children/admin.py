@@ -75,7 +75,11 @@ class DisabledChildAdmin(admin.ModelAdmin):
         "removal_reason",
         "removal_date",
     )
-    list_filter = ("status", "palliative", "removal_reason")
+    list_filter = (
+        "status",
+        "palliative",
+        "removal_reason",
+    )
     search_fields = ("patient__insurance_number",)
     ordering = ("-disability_date",)
 
@@ -104,7 +108,13 @@ class DisabledChildAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:  # При редактировании
-            return ("patient", "mkb_code", "status", "disability_date", "palliative")
+            return (
+                "patient",
+                "mkb_code",
+                "status",
+                "disability_date",
+                "palliative",
+            )
         return ()
 
     def save_model(self, request, obj, form, change):

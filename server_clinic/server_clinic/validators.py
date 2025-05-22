@@ -77,4 +77,3 @@ def validate_death_date(instance):
         raise ValidationError(
             {"death_date": "Дата смерти не может быть раньше даты рождения"}
         )
-
