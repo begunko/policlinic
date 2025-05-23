@@ -28,9 +28,9 @@ DEBUG = True
 
 INSTALLED_APPS = [
     "patient",
-    "diagnos",
+    # "diagnos",
     "death",
-    'disabled_children',
+    # 'disabled_children',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

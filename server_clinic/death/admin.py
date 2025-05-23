@@ -2,120 +2,114 @@
 from django.contrib import admin
 from .models import Death
 from django import forms
-from django.core.exceptions import ValidationError
-
+from django.http import HttpRequest
 
 class DeathAdminForm(forms.ModelForm):
     class Meta:
         model = Death
         fields = "__all__"
         widgets = {
-            "search_term": forms.TextInput(
+            "insurance_number": forms.TextInput(
                 attrs={
                     "placeholder": "Введите номер полиса ОМС...",
                     "class": "vTextField",
-                    "autofocus": "autofocus",
                 }
             ),
             "death_date": forms.DateInput(
-                format=("%Y-%m-%d"), attrs={"type": "date", "class": "vDateField"}
+                format=("%Y-%m-%d"),
+                attrs={
+                    "type": "date",
+                    "class": "vDateField",
+                },
             ),
             "death_cause": forms.TextInput(
                 attrs={
                     "placeholder": "A00.0",
                     "class": "vTextField",
-                    "pattern": r"^[A-Z]\d{2}(\.\d{1,4})?$",
-                    "title": "Формат: A00.0 (буква, две цифры, точка, до 4 символов)",
                 }
             ),
             "comment": forms.Textarea(attrs={"rows": 3}),
         }
 
-        # Добавляем явную проверку на обязательность полей
-        required_fields = ["death_date", "death_place", "death_cause"]
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # * Делаем автоподтянутые поля readonly
-        for field in "full_name", "gender", "birth_date", "age", "filial":
-            self.fields[field].widget.attrs["readonly"] = True
-            self.fields[field].widget.attrs["class"] = "readonly"
+        if "patient" in self.data:  # Предзаполнение пациента из GET-параметра
+            try:
+                patient_id = int(self.data.get("patient"))
+                self.initial["patient"] = patient_id
+            except (ValueError, TypeError):
+                pass
 
     def clean(self):
-        cleaned_data = super().clean()
-        # Проверка уникальности пациента
-        if (
-            Death.objects.filter(patient=cleaned_data.get("patient"))
-            .exclude(pk=self.instance.pk)
-            .exists()
-        ):
-            raise ValidationError("Для этого пациента уже существует запись о смерти")
-
-        # Проверка соответствия полиса и пациента
-        if (
-            self.instance.pk
-            and cleaned_data.get("search_term")
-            != self.instance.patient.insurance_number
-        ):
-            raise ValidationError(
-                {"search_term": "Невозможно изменить полис для существующей записи"}
-            )
-
-        # Добавляем проверку на заполненность обязательных полей
-        for field in ["death_date", "death_place", "death_cause"]:
-            if not cleaned_data.get(field):
-                self.add_error(field, "Это поле обязательно для заполнения")
-
-        return cleaned_data
+        return super().clean()
 
 
 @admin.register(Death)
 class DeathAdmin(admin.ModelAdmin):
     # form = DeathAdminForm
+    fields = ['patient', 'death_date', 'death_cause', 'death_place']
+    def get_form(self, request: HttpRequest, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if 'patient' in request.GET:
+            try:
+                form.base_fields['patient'].initial = int(request.GET['patient'])
+            except (ValueError, TypeError):
+                pass
+        return form
+    
+    autocomplete_fields = ["patient"]
     list_display = (
-        "full_name",
+        "get_full_name",
         "death_date",
         "death_place",
         "death_cause",
+        "get_insurance_number",
     )
     list_filter = (
         "death_place",
-        "filial",
+        "patient__filial",
+        "patient__gender",
     )
     search_fields = (
-        "full_name",
-        "search_term",
-        "death_cause",
+        "insurance_number",
+        "patient__full_name",
     )
     readonly_fields = (
-        "full_name",
-        "gender",
-        "birth_date",
-        "age",
-        "filial",
-    )
-    fieldsets = (
-        (
-            "Поиск пациента",
-            {
-                "fields": ("search_term",),
-                "description": "Введите номер полиса ОМС пациента для автоматического заполнения данных",
-            },
-        ),
-        (
-            "Данные пациента",
-            {
-                "fields": (("full_name", "gender"), ("birth_date", "age"), "filial"),
-                "classes": ("collapse",),
-            },
-        ),
-        (
-            "Информация о смерти",
-            {"fields": ("death_date", "death_place", "death_cause", "comment")},
-        ),
+        "get_full_name",
+        "get_gender",
+        "get_birth_date",
+        "get_age",
+        "get_filial",
+        "get_insurance_number",
     )
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj:  # Для существующих записей
-            return self.readonly_fields + ("search_term",)
-        return self.readonly_fields
+    # Кастомные методы для отображения данных пациента
+    def get_full_name(self, obj):
+        return obj.patient.full_name if obj.patient else "-"
+
+    get_full_name.short_description = "ФИО пациента"
+
+    def get_gender(self, obj):
+        return obj.patient.get_gender_display() if obj.patient else "-"
+
+    get_gender.short_description = "Пол"
+
+    def get_birth_date(self, obj):
+        return obj.patient.birth_date if obj.patient else "-"
+
+    get_birth_date.short_description = "Дата рождения"
+
+    def get_age(self, obj):
+        return obj.patient.age if obj.patient else "-"
+
+    get_age.short_description = "Возраст"
+
+    def get_filial(self, obj):
+        return obj.patient.get_filial_display() if obj.patient else "-"
+
+    get_filial.short_description = "Филиал"
+
+    def get_insurance_number(self, obj):
+        return obj.patient.insurance_number
+
+    get_insurance_number.short_description = "Полис ОМС"

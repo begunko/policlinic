@@ -1,3 +1,4 @@
+# server_clinic/server_clinic/mixins.py
 from django.db import models
 from patient.constants import GENDER_CHOICES, FILIAL
 

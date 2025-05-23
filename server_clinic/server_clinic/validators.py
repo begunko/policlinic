@@ -1,8 +1,9 @@
 # server_clinic/server_clinic/validator.py
 import re
 from django.core.exceptions import ValidationError
-from disabled_children.constants import PRIMARY_STATUS, REMOVAL_STATUS
+from server_clinic.constants import PRIMARY_STATUS, REMOVAL_STATUS
 from datetime import date
+from django.apps import apps
 
 
 # Валидатор для проверки кода МКБ-10
@@ -36,9 +37,10 @@ def validate_insurance_number(value):
 
 # Проверка даты смерти
 def validate_death_date(instance):
+    # Получаем дату смерти из инстанса
     if instance.death_date > date.today():
         raise ValidationError({"death_date": "Дата смерти не может быть в будущем"})
-    if instance.death_date < instance.birth_date:
+    if instance.death_date < instance.patient.birth_date:
         raise ValidationError(
             {"death_date": "Дата смерти не может быть раньше даты рождения"}
         )
@@ -105,3 +107,38 @@ def validate_disp_end_date(instance):
         raise ValidationError(
             {"disp_end_date": "Дата снятия не может быть раньше даты начала"}
         )
+
+
+# Поиск пациента только при создании новой записи и предупреждение об ошибке в случае отсутствия
+def validate_patient_by_insurance_number(instance):
+#Получаем модель Patient через apps
+    Patient = apps.get_model('patient', 'Patient')
+    if not instance.pk:
+        try:
+            instance.patient = Patient.objects.get(
+                insurance_number=instance.insurance_number
+            )
+        except Patient.DoesNotExist:
+            raise ValidationError(
+                {"insurance_number": "Пациент с таким полисом не найден"}
+            )
+
+def validate_unique_death_record(instance):
+    # Получаем модель Death через apps
+    Death = apps.get_model('death', 'Death')
+    
+    # Проверка уникальности записи
+    if instance.pk:
+        if Death.objects.filter(
+            patient=instance.patient
+        ).exclude(pk=instance.pk).exists():
+            raise ValidationError(
+                "Для этого пациента уже существует запись о смерти"
+            )
+    else:
+        if Death.objects.filter(
+            patient=instance.patient
+        ).exists():
+            raise ValidationError(
+                "Для этого пациента уже существует запись о смерти"
+            )

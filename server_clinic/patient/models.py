@@ -3,11 +3,11 @@ from django.db import models
 from datetime import date
 from django.core.validators import RegexValidator
 from dateutil.relativedelta import relativedelta
-from .constants import GENDER_CHOICES, FILIAL
+from server_clinic.constants import GENDER_CHOICES, FILIAL
 from server_clinic.validators import validate_birth_date, validate_insurance_number
 
 
-# Модель пациента, наследуется от AbstractUser
+# Модель пациента
 class Patient(models.Model):
     # Базовые данные пациента
     full_name = models.CharField(
@@ -46,19 +46,11 @@ class Patient(models.Model):
         verbose_name="Номер полиса ОМС",
         help_text="16 цифр без пробелов и разделителей",
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата создания",
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Последнее обновление",
-    )
 
     class Meta:
+        db_table = "patient"
         verbose_name = "Пациент"
         verbose_name_plural = "Пациенты"
-        ordering = ["-created_at"]  # Сортировка по дате создания (от новых к старым)
         indexes = [
             models.Index(fields=["full_name"]),
             models.Index(fields=["insurance_number"]),
@@ -71,7 +63,4 @@ class Patient(models.Model):
     # Свойство для получения возраста
     @property
     def age(self):
-        try:
-            return relativedelta(date.today(), self.birth_date).years
-        except Exception:
-            return None
+        return relativedelta(date.today(), self.birth_date).years

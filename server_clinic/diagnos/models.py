@@ -1,7 +1,7 @@
 # server_clinic/diagnos/models.py
 from django.db import models
 from patient.models import Patient
-from .constants import (
+from server_clinic.constants import (
     DISP_STATUS_CHOICES,
     PRIMARY_REASON_CHOICES,
     REMOVE_REASON_CHOICES,

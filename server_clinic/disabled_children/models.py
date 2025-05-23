@@ -1,7 +1,7 @@
 # server_clinic/disabled_children/models.py
 from django.db import models
 from patient.models import Patient
-from .constants import STATUS_CHOICES, REMOVAL_REASONS
+from server_clinic.constants import STATUS_CHOICES, REMOVAL_REASONS
 from server_clinic.validators import (
     validate_icd10_format,
     validate_status_date_consistency,
